@@ -1,0 +1,30 @@
+#!/bin/bash
+
+function urldecode() { : "${*//+/ }"; echo -e "${_//%/\\x}"; }
+
+filepath=$(urldecode $1)
+filepath="${filepath#file://}"
+dirpath="${filepath%/*}"
+filename="${filepath##*/}"
+
+extension="${filename#*.}"
+base="${filename%%.*}"
+newname=$(zenity --entry --title="Rename files" --entry-text="$base")
+if [[ -z "$newname" ]]
+then
+    exit 0
+fi
+num=1
+for var in "$@"
+do
+    currentfile=$(urldecode $var)
+    currentfile="${currentfile#file://}"
+    newfile="${dirpath}/${newname}(${num}).${extension}"
+    if [ ! -f "$newfile" ]; then
+        mv "$currentfile" "$newfile"
+        echo "renamed $currentfile to $newfile"
+    else
+        echo "file $newfile exists, skipping..."
+    fi
+    ((num++))
+done
