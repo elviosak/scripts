@@ -1,5 +1,9 @@
 #!/bin/bash
 
+#This script was made to be used in nemo's bulk rename functionality,
+#will preserve each file's extension and append a space and a number in parenthesis
+#eg. file (1).txt, file (2).txt
+
 function urldecode() { : "${*//+/ }"; echo -e "${_//%/\\x}"; }
 
 filepath=$(urldecode $1)
@@ -7,22 +11,41 @@ filepath="${filepath#file://}"
 dirpath="${filepath%/*}"
 filename="${filepath##*/}"
 
-extension="${filename#*.}"
-base="${filename%%.*}"
-newname=$(zenity --entry --title="Rename files" --entry-text="$base")
-if [[ -z "$newname" ]]
+base="${filename%.*}"
+
+#zenity
+if command -v zenity &> /dev/null
 then
-    exit 0
+    newname=$(zenity --entry --width=400 --title="Rename files" --entry-text="$base")
+elif command -v yad &> /dev/null
+then
+    newname=$(yad --entry --width=400 --title="Rename files" --entry-text="$base")
+else
+    echo "Dialog command not found, instal zenity or yad"
+    exit
+fi
+
+newname=$(echo "$newname" | sed -e 's/[^A-Za-z0-9\s()\[\]_-]/_/g')
+if [[ -z "$newname" ]]; then
+    exit
 fi
 num=1
 for var in "$@"
 do
-    currentfile=$(urldecode $var)
-    currentfile="${currentfile#file://}"
-    newfile="${dirpath}/${newname}(${num}).${extension}"
+    current_file=$(urldecode $var)
+    current_file="${current_file#file://}"
+    current_filename="${current_file##*/}"
+
+    root="${current_filename#.}";root="${current_filename%"$root"}${root%.*}"
+    ext="${current_filename#"$root"}"
+
+    newfile="${dirpath}/${newname} (${num})"
+    if [[ -n $ext ]]; then
+        newfile="${newfile}${ext}"
+    fi
     if [ ! -f "$newfile" ]; then
-        mv "$currentfile" "$newfile"
-        echo "renamed $currentfile to $newfile"
+        mv "$current_file" "$newfile"
+        echo "renamed $current_file to $newfile"
     else
         echo "file $newfile exists, skipping..."
     fi
