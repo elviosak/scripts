@@ -36,6 +36,7 @@ do
     current_file="${current_file#file://}"
     current_filename="${current_file##*/}"
 
+    # https://stackoverflow.com/a/40928328
     root="${current_filename#.}";root="${current_filename%"$root"}${root%.*}"
     ext="${current_filename#"$root"}"
 
