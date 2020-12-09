@@ -25,6 +25,7 @@ else
     exit
 fi
 
+#replace some characters with "_"
 newname=$(echo "$newname" | sed -e 's/[^A-Za-z0-9\s()\[\]_-]/_/g')
 if [[ -z "$newname" ]]; then
     exit
